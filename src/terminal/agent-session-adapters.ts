@@ -1348,26 +1348,26 @@ const qwenAdapter: AgentSessionAdapter = {
 		const hooks = resolveHookContext(input);
 		if (hooks) {
 			const configPath = join(getHookAgentDirectory("qwen"), "settings.json");
-			const qwenHookCommand = buildHooksCommand(["gemini-hook"]);
+			const qwenHookCommand = buildHooksCommand(["qwen-hook"]);
 
 			const config = {
 				hooks: {
-					BeforeTool: [
+					PreToolUse: [
 						{
 							hooks: [{ type: "command", command: qwenHookCommand }],
 						},
 					],
-					AfterTool: [
+					PostToolUse: [
 						{
 							hooks: [{ type: "command", command: qwenHookCommand }],
 						},
 					],
-					AfterAgent: [
+					SubagentStop: [
 						{
 							hooks: [{ type: "command", command: qwenHookCommand }],
 						},
 					],
-					BeforeAgent: [
+					SubagentStart: [
 						{
 							hooks: [{ type: "command", command: qwenHookCommand }],
 						},
