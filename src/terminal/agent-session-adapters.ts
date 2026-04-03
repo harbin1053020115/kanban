@@ -1337,7 +1337,7 @@ const qwenAdapter: AgentSessionAdapter = {
 			args.push("--yolo");
 		}
 
-		if (input.resumeFromTrash && !hasCliOption(args, "resume")) {
+		if (input.resumeFromTrash && !hasCliOption(args, "--resume")) {
 			args.push("--resume");
 		}
 
