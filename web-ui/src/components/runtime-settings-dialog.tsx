@@ -22,6 +22,7 @@ import { Dialog, DialogBody, DialogFooter, DialogHeader } from "@/components/ui/
 import { TASK_GIT_BASE_REF_PROMPT_VARIABLE, type TaskGitAction } from "@/git-actions/build-task-git-action-prompt";
 import { useRuntimeSettingsClineController } from "@/hooks/use-runtime-settings-cline-controller";
 import { useRuntimeSettingsClineMcpController } from "@/hooks/use-runtime-settings-cline-mcp-controller";
+import { useTranslation } from "@/i18n/use-translation";
 import { useLayoutCustomizations } from "@/resize/layout-customizations";
 import { openFileOnHost } from "@/runtime/runtime-config-query";
 import type {
@@ -86,7 +87,7 @@ function ShortcutIconComponent({ icon, size = 14 }: { icon: string | undefined; 
 
 function formatNotificationPermissionStatus(permission: BrowserNotificationPermission): string {
 	if (permission === "default") {
-		return "not requested yet";
+		return "notRequested";
 	}
 	return permission;
 }
@@ -307,6 +308,7 @@ export function RuntimeSettingsDialog({
 	const [openPrPromptTemplate, setOpenPrPromptTemplate] = useState("");
 	const [selectedPromptVariant, setSelectedPromptVariant] = useState<TaskGitAction>("commit");
 	const [copiedVariableToken, setCopiedVariableToken] = useState<string | null>(null);
+	const { t } = useTranslation();
 	const [saveError, setSaveError] = useState<string | null>(null);
 	const [pendingShortcutScrollIndex, setPendingShortcutScrollIndex] = useState<number | null>(null);
 	const copiedVariableResetTimerRef = useRef<number | null>(null);
@@ -598,7 +600,7 @@ export function RuntimeSettingsDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogHeader title="Settings" icon={<Settings size={16} />} />
+			<DialogHeader title={t("settings:title")} icon={<Settings size={16} />} />
 			<DialogBody>
 				<h5 className="font-semibold text-text-primary m-0">Global</h5>
 				<p
@@ -729,7 +731,10 @@ export function RuntimeSettingsDialog({
 				</div>
 				<div className="flex items-center gap-2 mt-2 mb-2">
 					<p className="text-text-secondary text-[13px] m-0">
-						Browser permission: {formatNotificationPermissionStatus(notificationPermission)}
+						{t("settings:notifications.browserPermission")}:{" "}
+						{formatNotificationPermissionStatus(notificationPermission) === "notRequested"
+							? t("settings:notifications.notRequested")
+							: formatNotificationPermissionStatus(notificationPermission)}
 					</p>
 					{notificationPermission !== "granted" && notificationPermission !== "unsupported" ? (
 						<InlineUtilityButton
@@ -818,7 +823,7 @@ export function RuntimeSettingsDialog({
 									),
 								)
 							}
-							placeholder="Label"
+							placeholder={t("settings:shortcuts.labelPlaceholder")}
 							className="h-7 w-full rounded-md border border-border bg-surface-2 px-2 text-xs text-text-primary placeholder:text-text-tertiary focus:border-border-focus focus:outline-none"
 						/>
 						<input
@@ -830,7 +835,7 @@ export function RuntimeSettingsDialog({
 									),
 								)
 							}
-							placeholder="Command"
+							placeholder={t("settings:shortcuts.commandPlaceholder")}
 							className="h-7 w-full rounded-md border border-border bg-surface-2 px-2 text-xs text-text-primary placeholder:text-text-tertiary focus:border-border-focus focus:outline-none"
 						/>
 						<Button
@@ -862,17 +867,17 @@ export function RuntimeSettingsDialog({
 					icon={<ExternalLink size={14} />}
 					onClick={() => window.open("https://docs.cline.bot/kanban/overview", "_blank")}
 				>
-					Read the docs
+					{t("settings:buttons.readTheDocs")}
 				</Button>
 				<Button onClick={() => onOpenChange(false)} disabled={controlsDisabled}>
-					Cancel
+					{t("common:buttons.cancel")}
 				</Button>
 				<Button
 					variant="primary"
 					onClick={() => void handleSave()}
 					disabled={controlsDisabled || !hasUnsavedChanges}
 				>
-					Save
+					{t("common:buttons.save")}
 				</Button>
 			</DialogFooter>
 		</Dialog>

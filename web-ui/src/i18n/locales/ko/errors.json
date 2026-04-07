@@ -1,0 +1,8 @@
+{
+	"connectionLost": "연결 끊김",
+	"taskCreateFailed": "작업 생성 실패",
+	"taskStartFailed": "작업 시작 실패",
+	"saveFailed": "저장 실패",
+	"loadFailed": "로드 실패",
+	"retrying": "재시도 중..."
+}

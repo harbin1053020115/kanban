@@ -1,0 +1,31 @@
+{
+	"createDialog": {
+		"titleSingle": "New task",
+		"titleMulti": "New tasks",
+		"describeTask": "Describe the task...",
+		"splitIntoTasks_one": "Split into {{count}} task",
+		"splitIntoTasks_other": "Split into {{count}} tasks",
+		"addTask": "Add task",
+		"backToSinglePrompt": "Back to single prompt",
+		"startInPlanMode": "Start in plan mode",
+		"automatically": "Automatically",
+		"noBranches": "No branches detected",
+		"createMore": "Create more",
+		"moreStartOptions": "More start options",
+		"removeTask": "Remove task {{index}}",
+		"create": "Create",
+		"createTasks_one": "Create {{count}} task",
+		"createTasks_other": "Create {{count}} tasks",
+		"startTasks_one": "Start {{count}} task",
+		"startTasks_other": "Start {{count}} tasks",
+		"startTask": "Start task",
+		"startAndOpen": "Start and open",
+		"task": "task",
+		"tasks": "tasks",
+		"autoReview": {
+			"makeCommit": "Make commit",
+			"makePR": "Make PR",
+			"moveToTrash": "Move to Trash"
+		}
+	}
+}

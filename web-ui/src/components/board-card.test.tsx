@@ -60,6 +60,18 @@ vi.mock("@/utils/text-measure", () => ({
 	readElementFontShorthand: () => "400 14px sans-serif",
 }));
 
+vi.mock("@/i18n/use-translation", () => ({
+	useTranslation: () => ({
+		t: (key: string, fallback?: string) => {
+			if (fallback) return fallback;
+			// Strip namespace and return key as readable text for tests
+			const keyWithoutNs = key.includes(":") ? key.split(":")[1] : key;
+			return keyWithoutNs;
+		},
+		i18n: { language: "en", changeLanguage: vi.fn() },
+	}),
+}));
+
 vi.mock("@/utils/task-prompt", async () => {
 	const actual = await vi.importActual<typeof import("@/utils/task-prompt")>("@/utils/task-prompt");
 	return {
@@ -203,7 +215,7 @@ describe("BoardCard", () => {
 			root.render(<BoardCard card={createCard()} index={0} columnId="review" isMoveToTrashLoading />);
 		});
 
-		const trashButton = container.querySelector('button[aria-label="Move task to trash"]');
+		const trashButton = container.querySelector('button[aria-label="moveTaskToTrash"]');
 		expect(trashButton).toBeInstanceOf(HTMLButtonElement);
 		expect((trashButton as HTMLButtonElement | null)?.disabled).toBe(true);
 		expect(trashButton?.querySelector("svg.animate-spin")).toBeTruthy();
@@ -222,7 +234,7 @@ describe("BoardCard", () => {
 		const findButton = (label: string) =>
 			Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.trim() === label);
 
-		const seeMoreButton = findButton("See more");
+		const seeMoreButton = findButton("seeMore");
 		expect(seeMoreButton).toBeDefined();
 		expect(container.textContent).not.toContain("final hidden segment");
 
@@ -231,17 +243,17 @@ describe("BoardCard", () => {
 			seeMoreButton?.click();
 		});
 
-		expect(findButton("See more")).toBeUndefined();
-		expect(findButton("Less")).toBeDefined();
+		expect(findButton("seeMore")).toBeUndefined();
+		expect(findButton("less")).toBeDefined();
 		expect(container.textContent).toContain(description);
 
-		const lessButton = findButton("Less");
+		const lessButton = findButton("less");
 		await act(async () => {
 			lessButton?.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
 			lessButton?.click();
 		});
 
-		expect(findButton("See more")).toBeDefined();
+		expect(findButton("seeMore")).toBeDefined();
 		expect(container.textContent).not.toContain("final hidden segment");
 	});
 
@@ -444,7 +456,7 @@ describe("BoardCard", () => {
 			Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.trim() === label);
 		const cardElement = container.querySelector('[data-task-id="task-1"]');
 
-		expect(findButton("See more")).toBeDefined();
+		expect(findButton("seeMore")).toBeDefined();
 		expect(container.textContent).not.toContain("hidden tail");
 
 		await act(async () => {
@@ -452,18 +464,18 @@ describe("BoardCard", () => {
 		});
 
 		expect(onCardClick).not.toHaveBeenCalled();
-		expect(findButton("See more")).toBeDefined();
-		expect(findButton("Less")).toBeUndefined();
+		expect(findButton("seeMore")).toBeDefined();
+		expect(findButton("less")).toBeUndefined();
 		expect(container.textContent).not.toContain("hidden tail");
 
-		const seeMoreButton = findButton("See more");
+		const seeMoreButton = findButton("seeMore");
 		await act(async () => {
 			seeMoreButton?.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
 			seeMoreButton?.click();
 		});
 
-		expect(findButton("See more")).toBeUndefined();
-		expect(findButton("Less")).toBeDefined();
+		expect(findButton("seeMore")).toBeUndefined();
+		expect(findButton("less")).toBeDefined();
 		expect(container.textContent).toContain(preview);
 	});
 
@@ -499,7 +511,7 @@ describe("BoardCard", () => {
 			Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.trim() === label);
 		const cardElement = container.querySelector('[data-task-id="task-1"]');
 
-		expect(findButton("See more")).toBeDefined();
+		expect(findButton("seeMore")).toBeDefined();
 		expect(container.textContent).not.toContain("hidden tail");
 
 		await act(async () => {
@@ -507,19 +519,19 @@ describe("BoardCard", () => {
 		});
 
 		expect(onCardClick).toHaveBeenCalledTimes(1);
-		expect(findButton("See more")).toBeDefined();
-		expect(findButton("Less")).toBeUndefined();
+		expect(findButton("seeMore")).toBeDefined();
+		expect(findButton("less")).toBeUndefined();
 		expect(container.textContent).not.toContain("hidden tail");
 
-		const seeMoreButton = findButton("See more");
+		const seeMoreButton = findButton("seeMore");
 		await act(async () => {
 			seeMoreButton?.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
 			seeMoreButton?.click();
 		});
 
 		expect(onCardClick).toHaveBeenCalledTimes(1);
-		expect(findButton("See more")).toBeUndefined();
-		expect(findButton("Less")).toBeDefined();
+		expect(findButton("seeMore")).toBeUndefined();
+		expect(findButton("less")).toBeDefined();
 		expect(container.textContent).toContain(preview);
 	});
 

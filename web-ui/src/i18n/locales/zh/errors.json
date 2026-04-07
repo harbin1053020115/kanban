@@ -1,0 +1,8 @@
+{
+	"connectionLost": "连接丢失",
+	"taskCreateFailed": "创建任务失败",
+	"taskStartFailed": "启动任务失败",
+	"saveFailed": "保存失败",
+	"loadFailed": "加载失败",
+	"retrying": "重试中..."
+}

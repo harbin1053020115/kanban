@@ -1,0 +1,25 @@
+{
+	"title": "Settings",
+	"sections": {
+		"language": "Language",
+		"runtime": "Runtime",
+		"workspace": "Workspace"
+	},
+	"labels": {
+		"selectLanguage": "Select language"
+	},
+	"git": {
+		"commit": "Commit",
+		"makePR": "Make PR"
+	},
+	"notifications": {
+		"notRequested": "not requested yet"
+	},
+	"buttons": {
+		"readTheDocs": "Read the docs"
+	},
+	"shortcuts": {
+		"labelPlaceholder": "Label",
+		"commandPlaceholder": "Command"
+	}
+}

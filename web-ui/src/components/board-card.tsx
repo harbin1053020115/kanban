@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { Spinner } from "@/components/ui/spinner";
 import { Tooltip } from "@/components/ui/tooltip";
+import { useTranslation } from "@/i18n/use-translation";
 import type { RuntimeTaskSessionSummary } from "@/runtime/types";
 import { useTaskWorkspaceSnapshotValue } from "@/stores/workspace-metadata-store";
 import type { BoardCard as BoardCardModel, BoardColumnId } from "@/types";
@@ -38,9 +39,6 @@ const SESSION_ACTIVITY_COLOR = {
 
 const DESCRIPTION_COLLAPSE_LINES = 3;
 const SESSION_PREVIEW_COLLAPSE_LINES = 6;
-const DESCRIPTION_EXPAND_LABEL = "See more";
-const DESCRIPTION_COLLAPSE_LABEL = "Less";
-const DESCRIPTION_COLLAPSE_SUFFIX = `… ${DESCRIPTION_EXPAND_LABEL}`;
 
 function reconstructTaskWorktreeDisplayPath(taskId: string, workspacePath: string | null | undefined): string | null {
 	if (!workspacePath) {
@@ -232,6 +230,10 @@ export function BoardCard({
 	isDependencyLinking?: boolean;
 	workspacePath?: string | null;
 }): React.ReactElement {
+	const { t } = useTranslation();
+	const descriptionExpandLabel = t("board:seeMore");
+	const descriptionCollapseLabel = t("board:less");
+	const descriptionCollapseSuffix = `… ${descriptionExpandLabel}`;
 	const [isHovered, setIsHovered] = useState(false);
 	const [titleContainerRef, titleRect] = useMeasure<HTMLDivElement>();
 	const [descriptionContainerRef, descriptionRect] = useMeasure<HTMLDivElement>();
@@ -365,10 +367,10 @@ export function BoardCard({
 		return clampTextWithInlineSuffix(displayPromptSplit.description, {
 			maxWidthPx: descriptionWidth,
 			maxLines: DESCRIPTION_COLLAPSE_LINES,
-			suffix: DESCRIPTION_COLLAPSE_SUFFIX,
+			suffix: descriptionCollapseSuffix,
 			measureText: (value) => measureTextWidth(value, descriptionFont),
 		});
-	}, [descriptionFont, descriptionWidth, displayPromptSplit.description]);
+	}, [descriptionCollapseSuffix, descriptionFont, descriptionWidth, displayPromptSplit.description]);
 
 	const sessionPreviewDisplay = useMemo(() => {
 		if (!sessionActivity?.text) {
@@ -386,10 +388,10 @@ export function BoardCard({
 		return clampTextWithInlineSuffix(sessionActivity.text, {
 			maxWidthPx: sessionPreviewWidth,
 			maxLines: SESSION_PREVIEW_COLLAPSE_LINES,
-			suffix: DESCRIPTION_COLLAPSE_SUFFIX,
+			suffix: descriptionCollapseSuffix,
 			measureText: (value) => measureTextWidth(value, sessionPreviewFont),
 		});
-	}, [sessionActivity?.text, sessionPreviewFont, sessionPreviewWidth]);
+	}, [descriptionCollapseSuffix, sessionActivity?.text, sessionPreviewFont, sessionPreviewWidth]);
 
 	const renderStatusMarker = () => {
 		if (columnId === "in_progress") {
@@ -516,7 +518,7 @@ export function BoardCard({
 										icon={<Play size={14} />}
 										variant="ghost"
 										size="sm"
-										aria-label="Start task"
+										aria-label={t("board:startTask")}
 										onMouseDown={stopEvent}
 										onClick={(event) => {
 											stopEvent(event);
@@ -529,7 +531,7 @@ export function BoardCard({
 										variant="ghost"
 										size="sm"
 										disabled={isMoveToTrashLoading}
-										aria-label="Move task to trash"
+										aria-label={t("board:moveTaskToTrash")}
 										onMouseDown={stopEvent}
 										onClick={(event) => {
 											stopEvent(event);
@@ -537,21 +539,12 @@ export function BoardCard({
 										}}
 									/>
 								) : columnId === "trash" ? (
-									<Tooltip
-										side="bottom"
-										content={
-											<>
-												Restore session
-												<br />
-												in new worktree
-											</>
-										}
-									>
+									<Tooltip side="bottom" content={t("board:restoreSession")}>
 										<Button
 											icon={<RotateCcw size={12} />}
 											variant="ghost"
 											size="sm"
-											aria-label="Restore task from trash"
+											aria-label={t("board:restoreTaskFromTrash")}
 											onMouseDown={stopEvent}
 											onClick={(event) => {
 												stopEvent(event);
@@ -585,14 +578,14 @@ export function BoardCard({
 														type="button"
 														className="inline cursor-pointer rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent [color:inherit] [font:inherit]"
 														aria-expanded={isDescriptionExpanded}
-														aria-label="Collapse task description"
+														aria-label={t("board:collapseTaskDescription")}
 														onMouseDown={stopEvent}
 														onClick={(event) => {
 															stopEvent(event);
 															setIsDescriptionExpanded(false);
 														}}
 													>
-														{DESCRIPTION_COLLAPSE_LABEL}
+														{descriptionCollapseLabel}
 													</button>
 												</>
 											) : (
@@ -602,14 +595,14 @@ export function BoardCard({
 														type="button"
 														className="inline cursor-pointer rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent [color:inherit] [font:inherit]"
 														aria-expanded={isDescriptionExpanded}
-														aria-label="Expand task description"
+														aria-label={t("board:expandTaskDescription")}
 														onMouseDown={stopEvent}
 														onClick={(event) => {
 															stopEvent(event);
 															setIsDescriptionExpanded(true);
 														}}
 													>
-														{DESCRIPTION_EXPAND_LABEL}
+														{descriptionExpandLabel}
 													</button>
 												</>
 											)
@@ -657,14 +650,14 @@ export function BoardCard({
 															type="button"
 															className="inline cursor-pointer rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent [color:inherit] [font:inherit]"
 															aria-expanded={isSessionPreviewExpanded}
-															aria-label="Collapse task agent preview"
+															aria-label={t("board:collapseTaskAgentPreview")}
 															onMouseDown={stopEvent}
 															onClick={(event) => {
 																stopEvent(event);
 																setIsSessionPreviewExpanded(false);
 															}}
 														>
-															{DESCRIPTION_COLLAPSE_LABEL}
+															{descriptionCollapseLabel}
 														</button>
 													</>
 												) : (
@@ -674,14 +667,14 @@ export function BoardCard({
 															type="button"
 															className="inline cursor-pointer rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent [color:inherit] [font:inherit]"
 															aria-expanded={isSessionPreviewExpanded}
-															aria-label="Expand task agent preview"
+															aria-label={t("board:expandTaskAgentPreview")}
 															onMouseDown={stopEvent}
 															onClick={(event) => {
 																stopEvent(event);
 																setIsSessionPreviewExpanded(true);
 															}}
 														>
-															{DESCRIPTION_EXPAND_LABEL}
+															{descriptionExpandLabel}
 														</button>
 													</>
 												)

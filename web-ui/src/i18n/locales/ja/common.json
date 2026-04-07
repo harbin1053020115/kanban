@@ -1,0 +1,62 @@
+{
+	"buttons": {
+		"save": "保存",
+		"cancel": "キャンセル",
+		"delete": "削除",
+		"confirm": "確認",
+		"back": "戻る",
+		"close": "閉じる",
+		"create": "作成",
+		"add": "追加",
+		"remove": "削除",
+		"edit": "編集",
+		"done": "完了",
+		"retry": "再試行",
+		"continue": "続行",
+		"next": "次へ",
+		"previous": "前へ",
+		"copy": "コピー",
+		"copied": "コピーしました！",
+		"run": "実行",
+		"fetch": "上流から取得",
+		"pull": "プル",
+		"push": "プッシュ",
+		"saving": "保存中..."
+	},
+	"tooltips": {
+		"toggleTerminal": "ターミナル切替",
+		"settings": "設定",
+		"debug": "デバッグ",
+		"backToBoard": "ボードに戻る",
+		"openTerminal": "ターミナルを開く",
+		"closeTerminal": "ターミナルを閉じる",
+		"selectLanguage": "言語を選択"
+	},
+	"git": {
+		"detachedHead": "分離された HEAD",
+		"initializing": "初期化中",
+		"pullCommits_one": "上流から{{count}}件のコミットをローカルブランチに取り込みます。",
+		"pullCommits_other": "上流から{{count}}件のコミットをローカルブランチに取り込みます。",
+		"pushCommits_one": "ローカルの{{count}}件のコミットを上流にプッシュします。",
+		"pushCommits_other": "ローカルの{{count}}件のコミットを上流にプッシュします。",
+		"pullUpToDate": "上流からプルします。ブランチは既に最新です。",
+		"pushNoPending": "ローカルのコミットを上流にプッシュします。プッシュ待ちのコミットはありません。",
+		"fetchUpstream": "ローカルブランチやファイルを変更せずに、上流から最新の参照を取得します。"
+	},
+	"shortcuts": {
+		"selectShortcut": "ショートカットを選択",
+		"setupFirstShortcut": "最初のスクリプトショートカットを設定",
+		"shortcutDescription": "スクリプトショートカットは下部ターミナルでコマンドを実行し、プロジェクトのテストを素早く行えます。",
+		"shortcutNote": "後で設定を開いてショートカットの追加・管理ができます。",
+		"labelPlaceholder": "ラベル",
+		"commandPlaceholder": "npm run dev",
+		"couldNotSave": "ショートカットを保存できませんでした。"
+	},
+	"errorBoundary": {
+		"title": "エラーが発生しました",
+		"subtitle": "アプリケーションで予期しないエラーが発生しました。",
+		"reload": "アプリケーションを再読み込み"
+	},
+	"file": "ファイル",
+	"files": "ファイル"
+}

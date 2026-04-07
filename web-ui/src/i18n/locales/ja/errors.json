@@ -1,0 +1,8 @@
+{
+	"connectionLost": "接続が切断されました",
+	"taskCreateFailed": "タスクの作成に失敗しました",
+	"taskStartFailed": "タスクの起動に失敗しました",
+	"saveFailed": "保存に失敗しました",
+	"loadFailed": "読み込みに失敗しました",
+	"retrying": "再試行中..."
+}

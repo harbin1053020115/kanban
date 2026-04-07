@@ -1,0 +1,25 @@
+{
+	"title": "設定",
+	"sections": {
+		"language": "言語",
+		"runtime": "ランタイム",
+		"workspace": "ワークスペース"
+	},
+	"labels": {
+		"selectLanguage": "言語を選択"
+	},
+	"git": {
+		"commit": "コミット",
+		"makePR": "PRを作成"
+	},
+	"notifications": {
+		"notRequested": "未リクエスト"
+	},
+	"buttons": {
+		"readTheDocs": "ドキュメントを読む"
+	},
+	"shortcuts": {
+		"labelPlaceholder": "ラベル",
+		"commandPlaceholder": "コマンド"
+	}
+}

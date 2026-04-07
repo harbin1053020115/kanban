@@ -1,0 +1,19 @@
+{
+	"title": "任务详情",
+	"panels": {
+		"chat": "对话",
+		"terminal": "终端",
+		"diff": "变更",
+		"history": "历史",
+		"fileTree": "文件"
+	},
+	"terminal": {
+		"title": "终端",
+		"connecting": "连接中...",
+		"disconnected": "已断开连接",
+		"close": "关闭终端",
+		"collapse": "收起终端",
+		"expand": "展开终端"
+	},
+	"empty": "无内容"
+}

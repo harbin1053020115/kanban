@@ -1,0 +1,62 @@
+{
+	"buttons": {
+		"save": "저장",
+		"cancel": "취소",
+		"delete": "삭제",
+		"confirm": "확인",
+		"back": "뒤로",
+		"close": "닫기",
+		"create": "생성",
+		"add": "추가",
+		"remove": "제거",
+		"edit": "편집",
+		"done": "완료",
+		"retry": "재시도",
+		"continue": "계속",
+		"next": "다음",
+		"previous": "이전",
+		"copy": "복사",
+		"copied": "복사됨!",
+		"run": "실행",
+		"fetch": "업스트림에서 가져오기",
+		"pull": "풀",
+		"push": "푸시",
+		"saving": "저장 중..."
+	},
+	"tooltips": {
+		"toggleTerminal": "터미널 전환",
+		"settings": "설정",
+		"debug": "디버그",
+		"backToBoard": "보드로 돌아가",
+		"openTerminal": "터미널 열기",
+		"closeTerminal": "터미널 닫기",
+		"selectLanguage": "언어 선택"
+	},
+	"git": {
+		"detachedHead": "분리된 HEAD",
+		"initializing": "초기화 중",
+		"pullCommits_one": "업스트림에서 로컬 브랜치로 {{count}}개의 커밋을 가져옵니다.",
+		"pullCommits_other": "업스트림에서 로컬 브랜치로 {{count}}개의 커밋을 가져옵니다.",
+		"pushCommits_one": "로컬 {{count}}개의 커밋을 업스트림에 푸시합니다.",
+		"pushCommits_other": "로컬 {{count}}개의 커밋을 업스트림에 푸시합니다.",
+		"pullUpToDate": "업스트림에서 가져오기. 브랜치가 이미 최신입니다.",
+		"pushNoPending": "로컬 커밋을 업스트림에 푸시. 대기 중인 로컬 커밋이 없습니다.",
+		"fetchUpstream": "로컬 브랜치나 파일을 변경하지 않고 업스트림에서 최신 참조를 가져옵니다."
+	},
+	"shortcuts": {
+		"selectShortcut": "바로가기 선택",
+		"setupFirstShortcut": "첫 번째 스크립트 바로가기 설정",
+		"shortcutDescription": "스크립트 바로가기는 하단 터미널에서 명령을 실행하여 프로젝트를 빠르게 실행하고 테스트할 수 있습니다.",
+		"shortcutNote": "나중에 설정을 열어 바로가기를 추가하고 관리할 수 있습니다.",
+		"labelPlaceholder": "이름",
+		"commandPlaceholder": "npm run dev",
+		"couldNotSave": "바로가기를 저장할 수 없습니다."
+	},
+	"errorBoundary": {
+		"title": "오류가 발생했습니다",
+		"subtitle": "애플리케이션에서 예기치 않은 오류가 발생했습니다.",
+		"reload": "애플리케이션 다시 로드"
+	},
+	"file": "파일",
+	"files": "파일"
+}

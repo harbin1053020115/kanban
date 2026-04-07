@@ -1,0 +1,25 @@
+{
+	"title": "설정",
+	"sections": {
+		"language": "언어",
+		"runtime": "런타임",
+		"workspace": "워크스페이스"
+	},
+	"labels": {
+		"selectLanguage": "언어 선택"
+	},
+	"git": {
+		"commit": "커밋",
+		"makePR": "PR 생성"
+	},
+	"notifications": {
+		"notRequested": "요청되지 않음"
+	},
+	"buttons": {
+		"readTheDocs": "문서 읽기"
+	},
+	"shortcuts": {
+		"labelPlaceholder": "이름",
+		"commandPlaceholder": "명령"
+	}
+}

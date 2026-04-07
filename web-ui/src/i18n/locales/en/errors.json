@@ -1,0 +1,8 @@
+{
+	"connectionLost": "Connection lost",
+	"taskCreateFailed": "Failed to create task",
+	"taskStartFailed": "Failed to start task",
+	"saveFailed": "Failed to save",
+	"loadFailed": "Failed to load",
+	"retrying": "Retrying..."
+}

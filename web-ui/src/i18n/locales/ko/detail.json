@@ -1,0 +1,19 @@
+{
+	"title": "작업 상세",
+	"panels": {
+		"chat": "채팅",
+		"terminal": "터미널",
+		"diff": "변경사항",
+		"history": "기록",
+		"fileTree": "파일"
+	},
+	"terminal": {
+		"title": "터미널",
+		"connecting": "연결 중...",
+		"disconnected": "연결 끊김",
+		"close": "터미널 닫기",
+		"collapse": "터미널 접기",
+		"expand": "터미널 펼치기"
+	},
+	"empty": "콘텐츠 없음"
+}

@@ -1,0 +1,31 @@
+{
+	"createDialog": {
+		"titleSingle": "新建任务",
+		"titleMulti": "新建任务",
+		"describeTask": "描述任务内容...",
+		"splitIntoTasks_one": "拆分为 {{count}} 个任务",
+		"splitIntoTasks_other": "拆分为 {{count}} 个任务",
+		"addTask": "添加任务",
+		"backToSinglePrompt": "返回单任务模式",
+		"startInPlanMode": "以计划模式启动",
+		"automatically": "自动",
+		"noBranches": "没有检测到分支",
+		"createMore": "继续创建",
+		"moreStartOptions": "更多启动选项",
+		"removeTask": "移除任务 {{index}}",
+		"create": "创建",
+		"createTasks_one": "创建 {{count}} 个任务",
+		"createTasks_other": "创建 {{count}} 个任务",
+		"startTasks_one": "启动 {{count}} 个任务",
+		"startTasks_other": "启动 {{count}} 个任务",
+		"startTask": "启动任务",
+		"startAndOpen": "启动并打开",
+		"task": "任务",
+		"tasks": "任务",
+		"autoReview": {
+			"makeCommit": "提交",
+			"makePR": "创建 PR",
+			"moveToTrash": "移至回收站"
+		}
+	}
+}

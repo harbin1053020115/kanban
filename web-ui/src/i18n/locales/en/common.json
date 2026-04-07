@@ -1,0 +1,61 @@
+{
+	"buttons": {
+		"save": "Save",
+		"cancel": "Cancel",
+		"delete": "Delete",
+		"confirm": "Confirm",
+		"back": "Back",
+		"close": "Close",
+		"create": "Create",
+		"add": "Add",
+		"remove": "Remove",
+		"edit": "Edit",
+		"done": "Done",
+		"retry": "Retry",
+		"continue": "Continue",
+		"next": "Next",
+		"previous": "Previous",
+		"copy": "Copy",
+		"copied": "Copied!",
+		"run": "Run",
+		"fetch": "Fetch from upstream",
+		"pull": "Pull from upstream",
+		"push": "Push to upstream",
+		"saving": "Saving..."
+	},
+	"tooltips": {
+		"toggleTerminal": "Toggle terminal",
+		"settings": "Settings",
+		"debug": "Debug",
+		"backToBoard": "Back to board",
+		"openTerminal": "Open terminal",
+		"closeTerminal": "Close terminal"
+	},
+	"git": {
+		"detachedHead": "detached HEAD",
+		"initializing": "initializing",
+		"pullCommits_one": "Pull {{count}} commit from upstream into your local branch.",
+		"pullCommits_other": "Pull {{count}} commits from upstream into your local branch.",
+		"pushCommits_one": "Push {{count}} local commit to upstream.",
+		"pushCommits_other": "Push {{count}} local commits to upstream.",
+		"pullUpToDate": "Pull from upstream. Branch is already up to date.",
+		"pushNoPending": "Push local commits to upstream. No local commits are pending.",
+		"fetchUpstream": "Fetch latest refs from upstream without changing your local branch or files."
+	},
+	"shortcuts": {
+		"selectShortcut": "Select shortcut",
+		"setupFirstShortcut": "Set up your first script shortcut",
+		"shortcutDescription": "Script shortcuts run a command in the bottom terminal so you can quickly run and test your project.",
+		"shortcutNote": "You can always open Settings to add and manage more shortcuts later.",
+		"labelPlaceholder": "Label",
+		"commandPlaceholder": "npm run dev",
+		"couldNotSave": "Could not save shortcut."
+	},
+	"errorBoundary": {
+		"title": "Something went wrong",
+		"subtitle": "The application encountered an unexpected error.",
+		"reload": "Reload application"
+	},
+	"file": "file",
+	"files": "files"
+}

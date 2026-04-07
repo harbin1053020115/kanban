@@ -1,0 +1,19 @@
+{
+	"title": "Task Details",
+	"panels": {
+		"chat": "Chat",
+		"terminal": "Terminal",
+		"diff": "Changes",
+		"history": "History",
+		"fileTree": "Files"
+	},
+	"terminal": {
+		"title": "Terminal",
+		"connecting": "Connecting...",
+		"disconnected": "Disconnected",
+		"close": "Close terminal",
+		"collapse": "Collapse terminal",
+		"expand": "Expand terminal"
+	},
+	"empty": "No content"
+}

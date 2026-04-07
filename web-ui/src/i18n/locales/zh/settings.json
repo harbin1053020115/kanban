@@ -1,0 +1,25 @@
+{
+	"title": "设置",
+	"sections": {
+		"language": "语言",
+		"runtime": "运行时",
+		"workspace": "工作区"
+	},
+	"labels": {
+		"selectLanguage": "选择语言"
+	},
+	"git": {
+		"commit": "提交",
+		"makePR": "创建 PR"
+	},
+	"notifications": {
+		"notRequested": "未请求"
+	},
+	"buttons": {
+		"readTheDocs": "阅读文档"
+	},
+	"shortcuts": {
+		"labelPlaceholder": "名称",
+		"commandPlaceholder": "命令"
+	}
+}

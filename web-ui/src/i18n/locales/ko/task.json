@@ -1,0 +1,31 @@
+{
+	"createDialog": {
+		"titleSingle": "새 작업",
+		"titleMulti": "새 작업",
+		"describeTask": "작업 내용을 설명...",
+		"splitIntoTasks_one": "{{count}}개의 작업으로 분할",
+		"splitIntoTasks_other": "{{count}}개의 작업으로 분할",
+		"addTask": "작업 추가",
+		"backToSinglePrompt": "단일 프롬프트로 돌아가기",
+		"startInPlanMode": "계획 모드로 시작",
+		"automatically": "자동",
+		"noBranches": "감지된 브랜치가 없습니다",
+		"createMore": "계속 만들기",
+		"moreStartOptions": "추가 시작 옵션",
+		"removeTask": "작업 {{index}} 제거",
+		"create": "생성",
+		"createTasks_one": "{{count}}개 작업 생성",
+		"createTasks_other": "{{count}}개 작업 생성",
+		"startTasks_one": "{{count}}개 작업 시작",
+		"startTasks_other": "{{count}}개 작업 시작",
+		"startTask": "작업 시작",
+		"startAndOpen": "시작하고 열기",
+		"task": "작업",
+		"tasks": "작업",
+		"autoReview": {
+			"makeCommit": "커밋",
+			"makePR": "PR 생성",
+			"moveToTrash": "휴지통으로 이동"
+		}
+	}
+}

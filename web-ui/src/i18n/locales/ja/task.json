@@ -1,0 +1,31 @@
+{
+	"createDialog": {
+		"titleSingle": "新しいタスク",
+		"titleMulti": "新しいタスク",
+		"describeTask": "タスクの内容を説明...",
+		"splitIntoTasks_one": "{{count}}件のタスクに分割",
+		"splitIntoTasks_other": "{{count}}件のタスクに分割",
+		"addTask": "タスクを追加",
+		"backToSinglePrompt": "単一プロンプトに戻る",
+		"startInPlanMode": "計画モードで開始",
+		"automatically": "自動",
+		"noBranches": "ブランチが検出されません",
+		"createMore": "続けて作成",
+		"moreStartOptions": "その他の開始オプション",
+		"removeTask": "タスク{{index}}を削除",
+		"create": "作成",
+		"createTasks_one": "{{count}}件のタスクを作成",
+		"createTasks_other": "{{count}}件のタスクを作成",
+		"startTasks_one": "{{count}}件のタスクを開始",
+		"startTasks_other": "{{count}}件のタスクを開始",
+		"startTask": "タスクを開始",
+		"startAndOpen": "開始して開く",
+		"task": "タスク",
+		"tasks": "タスク",
+		"autoReview": {
+			"makeCommit": "コミット",
+			"makePR": "PRを作成",
+			"moveToTrash": "ゴミ箱に移動"
+		}
+	}
+}

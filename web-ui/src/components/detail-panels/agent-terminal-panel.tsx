@@ -7,6 +7,7 @@ import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Tooltip } from "@/components/ui/tooltip";
+import { useTranslation } from "@/i18n/use-translation";
 import type { RuntimeTaskSessionSummary } from "@/runtime/types";
 import { useTaskWorkspaceSnapshotValue } from "@/stores/workspace-metadata-store";
 import { usePersistentTerminalSession } from "@/terminal/use-persistent-terminal-session";
@@ -172,6 +173,7 @@ function AgentTerminalPanelLayout({
 	onToggleExpand,
 	sessionControls,
 }: AgentTerminalPanelProps & { sessionControls: AgentTerminalSessionControls }): ReactElement {
+	const { t } = useTranslation();
 	const { containerRef, lastError, isStopping, clearTerminal, stopTerminal } = sessionControls;
 	const canStop = summary?.state === "running" || summary?.state === "awaiting_review";
 	const statusLabel = useMemo(() => describeState(summary), [summary]);
@@ -288,7 +290,7 @@ function AgentTerminalPanelLayout({
 									variant="ghost"
 									size="sm"
 									onClick={onToggleExpand}
-									aria-label={isExpanded ? "Collapse terminal" : "Expand terminal"}
+									aria-label={isExpanded ? t("detail:terminal.collapse") : t("detail:terminal.expand")}
 								/>
 							</Tooltip>
 						) : null}
@@ -297,7 +299,7 @@ function AgentTerminalPanelLayout({
 							variant="ghost"
 							size="sm"
 							onClick={onClose}
-							aria-label="Close terminal"
+							aria-label={t("detail:terminal.close")}
 						/>
 					</div>
 				</div>

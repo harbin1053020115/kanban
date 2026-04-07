@@ -1,0 +1,19 @@
+{
+	"title": "タスク詳細",
+	"panels": {
+		"chat": "チャット",
+		"terminal": "ターミナル",
+		"diff": "変更",
+		"history": "履歴",
+		"fileTree": "ファイル"
+	},
+	"terminal": {
+		"title": "ターミナル",
+		"connecting": "接続中...",
+		"disconnected": "切断されました",
+		"close": "ターミナルを閉じる",
+		"collapse": "ターミナルを折りたたむ",
+		"expand": "ターミナルを展開"
+	},
+	"empty": "コンテンツなし"
+}
