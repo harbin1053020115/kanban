@@ -6,9 +6,8 @@ import * as RadixPopover from "@radix-ui/react-popover";
 import * as RadixSwitch from "@radix-ui/react-switch";
 import { getRuntimeAgentCatalogEntry, getRuntimeLaunchSupportedAgentCatalog } from "@runtime-agent-catalog";
 import { areRuntimeProjectShortcutsEqual } from "@runtime-shortcuts";
-import { Bug, Check, ChevronDown, Circle, CircleDot, ExternalLink, Lightbulb, Plus, Settings, X } from "lucide-react";
+import { Check, ChevronDown, Circle, CircleDot, ExternalLink, Plus, Settings, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { canShowFeaturebaseFeedbackButton, FeaturebaseFeedbackButton } from "@/components/featurebase-feedback-button";
 import { ClineSetupSection } from "@/components/shared/cline-setup-section";
 import {
 	getRuntimeShortcutIconComponent,
@@ -21,10 +20,10 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from "@/components/ui/dialog";
 import { TASK_GIT_BASE_REF_PROMPT_VARIABLE, type TaskGitAction } from "@/git-actions/build-task-git-action-prompt";
-import type { FeaturebaseFeedbackState } from "@/hooks/use-featurebase-feedback-widget";
 import { useRuntimeSettingsClineController } from "@/hooks/use-runtime-settings-cline-controller";
 import { useRuntimeSettingsClineMcpController } from "@/hooks/use-runtime-settings-cline-mcp-controller";
-import { getRuntimeClineProviderSettings } from "@/runtime/native-agent";
+import { previewThemeId, readStoredThemeId, saveThemeId, THEMES, type ThemeId } from "@/hooks/use-theme";
+import { useLayoutCustomizations } from "@/resize/layout-customizations";
 import { openFileOnHost } from "@/runtime/runtime-config-query";
 import type {
 	RuntimeAgentId,
@@ -287,7 +286,6 @@ export function RuntimeSettingsDialog({
 	workspaceId,
 	initialConfig = null,
 	liveMcpAuthStatuses = null,
-	featurebaseFeedbackState,
 	onOpenChange,
 	onSaved,
 	initialSection,
@@ -296,15 +294,17 @@ export function RuntimeSettingsDialog({
 	workspaceId: string | null;
 	initialConfig?: RuntimeConfigResponse | null;
 	liveMcpAuthStatuses?: RuntimeClineMcpServerAuthStatus[] | null;
-	featurebaseFeedbackState?: FeaturebaseFeedbackState;
 	onOpenChange: (open: boolean) => void;
 	onSaved?: () => void;
 	initialSection?: RuntimeSettingsSection | null;
 }): React.ReactElement {
 	const { config, isLoading, isSaving, save } = useRuntimeConfig(open, workspaceId, initialConfig);
+	const { resetLayoutCustomizations } = useLayoutCustomizations();
 	const [selectedAgentId, setSelectedAgentId] = useState<RuntimeAgentId>("claude");
 	const [agentAutonomousModeEnabled, setAgentAutonomousModeEnabled] = useState(true);
 	const [readyForReviewNotificationsEnabled, setReadyForReviewNotificationsEnabled] = useState(true);
+	const [initialThemeId, setInitialThemeId] = useState<ThemeId>(readStoredThemeId);
+	const [draftThemeId, setDraftThemeId] = useState<ThemeId>(readStoredThemeId);
 	const [notificationPermission, setNotificationPermission] = useState<BrowserNotificationPermission>("unsupported");
 	const [shortcuts, setShortcuts] = useState<RuntimeProjectShortcut[]>([]);
 	const [commitPromptTemplate, setCommitPromptTemplate] = useState("");
@@ -314,7 +314,6 @@ export function RuntimeSettingsDialog({
 	const [saveError, setSaveError] = useState<string | null>(null);
 	const [pendingShortcutScrollIndex, setPendingShortcutScrollIndex] = useState<number | null>(null);
 	const copiedVariableResetTimerRef = useRef<number | null>(null);
-	const pendingCloseAfterFeedbackOpenRef = useRef(false);
 	const shortcutsSectionRef = useRef<HTMLHeadingElement | null>(null);
 	const shortcutRowRefs = useRef<Array<HTMLDivElement | null>>([]);
 	const controlsDisabled = isLoading || isSaving || config === null;
@@ -352,10 +351,8 @@ export function RuntimeSettingsDialog({
 				binary: agent.binary,
 				installed: agent.id === "cline" ? true : null,
 			}));
-		// FIXME: remove after adding droid support
-		const visibleAgents = agents.filter((agent) => agent.id !== "droid" || agent.installed === true);
 		const orderIndexByAgentId = new Map(SETTINGS_AGENT_ORDER.map((agentId, index) => [agentId, index] as const));
-		const orderedAgents = [...visibleAgents].sort((left, right) => {
+		const orderedAgents = [...agents].sort((left, right) => {
 			const leftOrderIndex = orderIndexByAgentId.get(left.id) ?? Number.MAX_SAFE_INTEGER;
 			const rightOrderIndex = orderIndexByAgentId.get(right.id) ?? Number.MAX_SAFE_INTEGER;
 			return leftOrderIndex - rightOrderIndex;
@@ -381,21 +378,11 @@ export function RuntimeSettingsDialog({
 		selectedAgentId,
 		config,
 	});
-	const liveClineProviderSettings = useMemo<RuntimeClineProviderSettings>(() => {
-		return selectedAgentId === "cline"
-			? clineSettings.currentProviderSettings
-			: getRuntimeClineProviderSettings(config);
-	}, [clineSettings.currentProviderSettings, config, selectedAgentId]);
 	const clineMcpSettings = useRuntimeSettingsClineMcpController({
 		open,
 		workspaceId,
 		selectedAgentId,
 		liveAuthStatuses: liveMcpAuthStatuses,
-	});
-	const shouldShowFeaturebaseFeedback = canShowFeaturebaseFeedbackButton({
-		selectedAgentId,
-		clineProviderSettings: liveClineProviderSettings,
-		featurebaseFeedbackState,
 	});
 	const hasUnsavedChanges = useMemo(() => {
 		if (!config) {
@@ -414,6 +401,9 @@ export function RuntimeSettingsDialog({
 			return true;
 		}
 		if (clineMcpSettings.hasUnsavedChanges) {
+			return true;
+		}
+		if (draftThemeId !== initialThemeId) {
 			return true;
 		}
 		if (!areRuntimeProjectShortcutsEqual(shortcuts, initialShortcuts)) {
@@ -435,12 +425,14 @@ export function RuntimeSettingsDialog({
 		clineSettings.hasUnsavedChanges,
 		commitPromptTemplate,
 		config,
+		draftThemeId,
 		initialAgentAutonomousModeEnabled,
 		initialCommitPromptTemplate,
 		initialOpenPrPromptTemplate,
 		initialReadyForReviewNotificationsEnabled,
 		initialSelectedAgentId,
 		initialShortcuts,
+		initialThemeId,
 		openPrPromptTemplate,
 		readyForReviewNotificationsEnabled,
 		selectedAgentId,
@@ -468,6 +460,15 @@ export function RuntimeSettingsDialog({
 		fallbackAgentId,
 		open,
 	]);
+
+	useEffect(() => {
+		if (!open) {
+			return;
+		}
+		const persistedThemeId = readStoredThemeId();
+		setInitialThemeId(persistedThemeId);
+		setDraftThemeId(persistedThemeId);
+	}, [open]);
 
 	useEffect(() => {
 		if (!open) {
@@ -512,27 +513,7 @@ export function RuntimeSettingsDialog({
 			window.clearTimeout(copiedVariableResetTimerRef.current);
 			copiedVariableResetTimerRef.current = null;
 		}
-		pendingCloseAfterFeedbackOpenRef.current = false;
 	});
-
-	useEffect(() => {
-		if (!open) {
-			pendingCloseAfterFeedbackOpenRef.current = false;
-			return;
-		}
-		if (!pendingCloseAfterFeedbackOpenRef.current) {
-			return;
-		}
-		if ((featurebaseFeedbackState?.widgetOpenCount ?? 0) === 0) {
-			return;
-		}
-		pendingCloseAfterFeedbackOpenRef.current = false;
-		onOpenChange(false);
-	}, [featurebaseFeedbackState?.widgetOpenCount, onOpenChange, open]);
-
-	const handleFeaturebaseFeedbackClick = useCallback(() => {
-		pendingCloseAfterFeedbackOpenRef.current = true;
-	}, []);
 
 	const handleCopyVariableToken = (token: string) => {
 		void (async () => {
@@ -611,8 +592,12 @@ export function RuntimeSettingsDialog({
 			setSaveError("Could not save runtime settings. Check runtime logs and try again.");
 			return;
 		}
+		if (draftThemeId !== initialThemeId) {
+			saveThemeId(draftThemeId);
+			setInitialThemeId(draftThemeId);
+		}
 		onSaved?.();
-		onOpenChange(false);
+		handleDialogOpenChange(false);
 	};
 
 	const handleRequestPermission = () => {
@@ -633,8 +618,23 @@ export function RuntimeSettingsDialog({
 		[workspaceId],
 	);
 
+	const handleDialogOpenChange = useCallback(
+		(nextOpen: boolean) => {
+			if (!nextOpen) {
+				const persistedThemeId = readStoredThemeId();
+				if (draftThemeId !== persistedThemeId) {
+					previewThemeId(persistedThemeId);
+				}
+				setDraftThemeId(persistedThemeId);
+				setInitialThemeId(persistedThemeId);
+			}
+			onOpenChange(nextOpen);
+		},
+		[draftThemeId, onOpenChange],
+	);
+
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
+		<Dialog open={open} onOpenChange={handleDialogOpenChange}>
 			<DialogHeader title="Settings" icon={<Settings size={16} />} />
 			<DialogBody>
 				<h5 className="font-semibold text-text-primary m-0">Global</h5>
@@ -653,7 +653,7 @@ export function RuntimeSettingsDialog({
 					{config?.globalConfigPath ? <ExternalLink size={12} className="inline ml-1.5 align-middle" /> : null}
 				</p>
 
-				<h6 className="font-semibold text-text-primary mt-3 mb-0">Agent runtime</h6>
+				<h6 className="font-semibold text-text-primary mt-3 mb-0">Agent</h6>
 				{displayedAgents.map((agent) => (
 					<AgentRow
 						key={agent.id}
@@ -777,6 +777,42 @@ export function RuntimeSettingsDialog({
 					) : null}
 				</div>
 
+				<h6 className="font-semibold text-text-primary mt-4 mb-2">Theme</h6>
+				<div className="flex flex-wrap gap-2">
+					{THEMES.map((theme) => (
+						<button
+							key={theme.id}
+							type="button"
+							aria-label={theme.label}
+							title={theme.label}
+							onClick={() => {
+								setDraftThemeId(theme.id);
+								previewThemeId(theme.id);
+							}}
+							className={cn(
+								"w-7 h-7 rounded-full cursor-pointer hover:opacity-80",
+								draftThemeId === theme.id ? "border-2 border-white" : "border-2",
+							)}
+							style={{
+								backgroundColor: theme.accent,
+								borderColor:
+									draftThemeId === theme.id ? "white" : `color-mix(in srgb, ${theme.accent} 50%, black)`,
+							}}
+						/>
+					))}
+				</div>
+				<p className="text-text-secondary text-[13px] mt-1.5 mb-0">
+					{THEMES.find((t) => t.id === draftThemeId)?.label ?? "Default"} theme
+				</p>
+
+				<h6 className="font-semibold text-text-primary mt-4 mb-2">Layout</h6>
+				<Button size="sm" onClick={resetLayoutCustomizations}>
+					Reset layout
+				</Button>
+				<p className="text-text-secondary text-[13px] mt-2 mb-0">
+					Reset sidebar, split pane, and terminal resize customizations back to their defaults.
+				</p>
+
 				<h5 className="font-semibold text-text-primary mt-4 mb-0">Project</h5>
 				<p
 					className="text-text-secondary font-mono text-xs m-0 break-all"
@@ -877,51 +913,6 @@ export function RuntimeSettingsDialog({
 					<p className="text-text-secondary text-[13px]">No shortcuts configured.</p>
 				) : null}
 
-				<div className="mt-6 pt-4 border-t border-border">
-					<p className="text-text-secondary text-xs m-0">Cline Kanban v{__APP_VERSION__}</p>
-					<a
-						href="https://github.com/cline/kanban"
-						target="_blank"
-						rel="noreferrer"
-						className="text-accent text-xs hover:underline"
-					>
-						github.com/cline/kanban
-					</a>
-					<div className="flex items-center gap-2 mt-2">
-						{shouldShowFeaturebaseFeedback ? (
-							<FeaturebaseFeedbackButton
-								selectedAgentId={selectedAgentId}
-								clineProviderSettings={liveClineProviderSettings}
-								featurebaseFeedbackState={featurebaseFeedbackState}
-								size="sm"
-								onClick={handleFeaturebaseFeedbackClick}
-							/>
-						) : (
-							<>
-								<Button
-									size="sm"
-									icon={<Bug size={14} />}
-									onClick={() => window.open("https://github.com/cline/kanban/issues", "_blank")}
-								>
-									Report Issue
-								</Button>
-								<Button
-									size="sm"
-									icon={<Lightbulb size={14} />}
-									onClick={() =>
-										window.open(
-											"https://github.com/cline/kanban/discussions/categories/feature-requests?discussions_q=is%3Aopen+category%3A%22Feature+Requests%22+sort%3Atop",
-											"_blank",
-										)
-									}
-								>
-									Feature Request
-								</Button>
-							</>
-						)}
-					</div>
-				</div>
-
 				{saveError ? (
 					<div className="flex gap-2 rounded-md border border-status-red/30 bg-status-red/5 p-3 text-[13px] mt-3">
 						<span className="text-text-primary">{saveError}</span>
@@ -929,7 +920,16 @@ export function RuntimeSettingsDialog({
 				) : null}
 			</DialogBody>
 			<DialogFooter>
-				<Button onClick={() => onOpenChange(false)} disabled={controlsDisabled}>
+				<Button
+					size="sm"
+					variant="ghost"
+					className="mr-auto mt-[3px]"
+					icon={<ExternalLink size={14} />}
+					onClick={() => window.open("https://docs.cline.bot/kanban/overview", "_blank")}
+				>
+					Read the docs
+				</Button>
+				<Button onClick={() => handleDialogOpenChange(false)} disabled={controlsDisabled}>
 					Cancel
 				</Button>
 				<Button

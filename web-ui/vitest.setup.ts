@@ -1,15 +1,3 @@
-class MockResizeObserver {
-	disconnect(): void {}
-	observe(_target: Element): void {}
-	unobserve(_target: Element): void {}
-}
-
-Object.defineProperty(globalThis, "ResizeObserver", {
-	writable: true,
-	configurable: true,
-	value: MockResizeObserver,
-});
-
 // Node.js v22+ adds a built-in localStorage to globalThis that lacks
 // Web Storage API methods when --localstorage-file is not provided.
 // This conflicts with jsdom's proper implementation because vitest's
@@ -77,3 +65,22 @@ Object.defineProperty(globalThis, "IntersectionObserver", {
 	configurable: true,
 	value: MockIntersectionObserver,
 });
+
+// jsdom does not implement window.matchMedia. Provide a minimal stub so that
+// hooks like useIsMobile and react-use's useMedia work during tests.
+if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
+	Object.defineProperty(window, "matchMedia", {
+		writable: true,
+		configurable: true,
+		value: (query: string): MediaQueryList => ({
+			matches: false,
+			media: query,
+			onchange: null,
+			addListener: () => {},
+			removeListener: () => {},
+			addEventListener: () => {},
+			removeEventListener: () => {},
+			dispatchEvent: () => false,
+		}),
+	});
+}
