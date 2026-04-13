@@ -51,6 +51,14 @@ export const RUNTIME_AGENT_CATALOG: RuntimeAgentCatalogEntry[] = [
 		installUrl: "https://docs.factory.ai/cli/getting-started/quickstart",
 	},
 	{
+		id: "kiro",
+		label: "Kiro",
+		binary: "kiro-cli",
+		baseArgs: ["chat"],
+		autonomousArgs: ["--trust-all-tools"],
+		installUrl: "https://kiro.dev",
+	},
+	{
 		id: "gemini",
 		label: "Gemini CLI",
 		binary: "gemini",
@@ -75,7 +83,8 @@ export const RUNTIME_LAUNCH_SUPPORTED_AGENT_IDS: readonly RuntimeAgentId[] = [
 	"claude",
 	"codex",
 	"droid",
-	// "qwen",
+	"kiro",
+  // "qwen",
 	// "opencode",
 	// "gemini",
 ];
