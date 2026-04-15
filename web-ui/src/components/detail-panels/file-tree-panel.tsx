@@ -1,9 +1,8 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { ChevronDown, ChevronRight, FileText, Folder, FolderOpen } from "lucide-react";
+import { ChevronDown, FileText, Folder, FolderOpen } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
 import type { RuntimeWorkspaceFileChange } from "@/runtime/types";
-import { buildFileTree, type FileTreeNode, getAllDirectoryPaths } from "@/utils/file-tree";
+import { buildFileTree, type FileTreeNode } from "@/utils/file-tree";
 
 interface FileDiffStats {
 	added: number;
@@ -161,23 +160,6 @@ export function FileTreePanel({
 		}));
 	}, []);
 
-	const handleExpandAll = useCallback(() => {
-		setCollapsedPaths({});
-	}, []);
-
-	const handleCollapseAll = useCallback(() => {
-		const allPaths = getAllDirectoryPaths(tree);
-		const newCollapsed: Record<string, boolean> = {};
-		for (const path of allPaths) {
-			newCollapsed[path] = true;
-		}
-		setCollapsedPaths(newCollapsed);
-	}, [tree]);
-
-	const directoryCount = useMemo(() => {
-		return getAllDirectoryPaths(tree).length;
-	}, [tree]);
-
 	return (
 		<div
 			style={{
@@ -214,16 +196,6 @@ export function FileTreePanel({
 					</div>
 				)}
 			</div>
-			{directoryCount > 1 && tree.length > 0 ? (
-				<div className="kb-file-tree-batch-buttons">
-					<Button variant="ghost" size="sm" onClick={handleExpandAll} icon={<ChevronDown size={12} />}>
-						展开
-					</Button>
-					<Button variant="ghost" size="sm" onClick={handleCollapseAll} icon={<ChevronRight size={12} />}>
-						折叠
-					</Button>
-				</div>
-			) : null}
 		</div>
 	);
 }
