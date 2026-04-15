@@ -1,7 +1,8 @@
-import { FileText, Folder, FolderOpen } from "lucide-react";
-import { useMemo } from "react";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { ChevronDown, ChevronRight, FileText, Folder, FolderOpen } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { RuntimeWorkspaceFileChange } from "@/runtime/types";
-import { buildFileTree, type FileTreeNode } from "@/utils/file-tree";
+import { buildFileTree, getAllDirectoryPaths, type FileTreeNode } from "@/utils/file-tree";
 
 interface FileDiffStats {
 	added: number;
@@ -82,6 +83,18 @@ export function FileTreePanel({
 		return workspaceFiles?.map((file) => file.path) ?? [];
 	}, [workspaceFiles]);
 	const tree = useMemo(() => buildFileTree(referencedPaths), [referencedPaths]);
+	const fileCountByPath = useMemo(() => {
+		const counts: Record<string, number> = {};
+		for (const path of referencedPaths) {
+			const parts = path.split("/");
+			let currentPath = "";
+			for (let i = 0; i < parts.length - 1; i++) {
+				currentPath = currentPath ? `${currentPath}/${parts[i]}` : parts[i];
+			 counts[currentPath] = (counts[currentPath] ?? 0) + 1;
+			}
+		}
+		return counts;
+	}, [referencedPaths]);
 	const diffStatsByPath = useMemo(() => {
 		const stats: Record<string, FileDiffStats> = {};
 		for (const file of workspaceFiles ?? []) {
@@ -92,6 +105,37 @@ export function FileTreePanel({
 		}
 		return stats;
 	}, [workspaceFiles]);
+
+	const [collapsedPaths, setCollapsedPaths] = useState<Record<string, boolean>>({});
+
+	// Reset collapsed state when workspaceFiles changes (diff source switch)
+	useEffect(() => {
+		setCollapsedPaths({});
+	}, [workspaceFiles]);
+
+	const handleToggleCollapse = useCallback((path: string) => {
+		setCollapsedPaths((prev) => ({
+			...prev,
+			[path]: !(prev[path] ?? false),
+		}));
+	}, []);
+
+	const handleExpandAll = useCallback(() => {
+		setCollapsedPaths({});
+	}, []);
+
+	const handleCollapseAll = useCallback(() => {
+		const allPaths = getAllDirectoryPaths(tree);
+		const newCollapsed: Record<string, boolean> = {};
+		for (const path of allPaths) {
+			newCollapsed[path] = true;
+		}
+		setCollapsedPaths(newCollapsed);
+	}, [tree]);
+
+	const directoryCount = useMemo(() => {
+		return getAllDirectoryPaths(tree).length;
+	}, [tree]);
 
 	return (
 		<div
