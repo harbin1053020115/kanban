@@ -521,8 +521,15 @@ body.kb-dependency-link-mode {
 }
 
 .kb-file-tree-row-directory {
-	cursor: default;
 	color: var(--color-text-tertiary);
+}
+
+.kb-file-tree-row-directory:hover {
+	background: var(--color-surface-3);
+}
+
+.kb-file-tree-row-directory:active {
+	background: var(--color-surface-4);
 }
 
 .kb-file-tree-row-selected {
@@ -533,6 +540,44 @@ body.kb-dependency-link-mode {
 .kb-file-tree-row.kb-file-tree-row-selected:hover {
 	background: var(--color-accent);
 	color: var(--color-accent-fg);
+}
+
+/* -- File tree collapsible -- */
+
+.kb-file-tree-collapse-icon {
+	transition: transform 150ms ease;
+}
+
+.kb-file-tree-collapsible-content {
+	overflow: hidden;
+}
+
+.kb-file-tree-collapsible-content[data-state="open"] {
+	animation: kb-file-tree-slide-down 150ms ease-out;
+}
+
+.kb-file-tree-collapsible-content[data-state="closed"] {
+	animation: kb-file-tree-slide-up 150ms ease-out;
+}
+
+@keyframes kb-file-tree-slide-down {
+	from { height: 0; }
+	to { height: var(--radix-collapsible-content-height); }
+}
+
+@keyframes kb-file-tree-slide-up {
+	from { height: var(--radix-collapsible-content-height); }
+	to { height: 0; }
+}
+
+/* -- File tree batch operations -- */
+
+.kb-file-tree-batch-buttons {
+	display: flex;
+	gap: 4px;
+	padding: 4px 8px;
+	border-top: 1px solid var(--color-border);
+	background: var(--color-surface-1);
 }
 
 /* -- Diff rows -- */
