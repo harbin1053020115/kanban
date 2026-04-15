@@ -1,6 +1,7 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { ChevronDown, FileText, Folder, FolderOpen } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, Folder, FolderOpen } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
 import type { RuntimeWorkspaceFileChange } from "@/runtime/types";
 import { buildFileTree, getAllDirectoryPaths, type FileTreeNode } from "@/utils/file-tree";
 
@@ -200,11 +201,26 @@ export function FileTreePanel({
 								selectedPath={selectedPath}
 								onSelectPath={onSelectPath}
 								diffStatsByPath={diffStatsByPath}
+								collapsedPaths={collapsedPaths}
+								onToggleCollapse={handleToggleCollapse}
+								fileCountByPath={fileCountByPath}
 							/>
 						))}
 					</div>
 				)}
 			</div>
+			{directoryCount > 1 && tree.length > 0 ? (
+				<div className="kb-file-tree-batch-buttons">
+					<Button variant="ghost" size="sm" onClick={handleExpandAll}>
+						<ChevronDown size={12} className="mr-1" />
+						展开
+					</Button>
+					<Button variant="ghost" size="sm" onClick={handleCollapseAll}>
+						<ChevronRight size={12} className="mr-1" />
+						折叠
+					</Button>
+				</div>
+			) : null}
 		</div>
 	);
 }
