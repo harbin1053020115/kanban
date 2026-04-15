@@ -570,15 +570,6 @@ body.kb-dependency-link-mode {
 	to { height: 0; }
 }
 
-/* -- File tree batch operations -- */
-
-.kb-file-tree-batch-buttons {
-	display: flex;
-	gap: 4px;
-	padding: 4px 8px;
-	border-top: 1px solid var(--color-border);
-	background: var(--color-surface-1);
-}
 
 /* -- Diff rows -- */
 
