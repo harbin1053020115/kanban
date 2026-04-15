@@ -211,12 +211,10 @@ export function FileTreePanel({
 			</div>
 			{directoryCount > 1 && tree.length > 0 ? (
 				<div className="kb-file-tree-batch-buttons">
-					<Button variant="ghost" size="sm" onClick={handleExpandAll}>
-						<ChevronDown size={12} className="mr-1" />
+					<Button variant="ghost" size="sm" onClick={handleExpandAll} icon={<ChevronDown size={12} />}>
 						展开
 					</Button>
-					<Button variant="ghost" size="sm" onClick={handleCollapseAll}>
-						<ChevronRight size={12} className="mr-1" />
+					<Button variant="ghost" size="sm" onClick={handleCollapseAll} icon={<ChevronRight size={12} />}>
 						折叠
 					</Button>
 				</div>
