@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight, FileText, Folder, FolderOpen } from "lucide-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { RuntimeWorkspaceFileChange } from "@/runtime/types";
-import { buildFileTree, getAllDirectoryPaths, type FileTreeNode } from "@/utils/file-tree";
+import { buildFileTree, type FileTreeNode, getAllDirectoryPaths } from "@/utils/file-tree";
 
 interface FileDiffStats {
 	added: number;
@@ -33,7 +33,7 @@ function FileTreeRow({
 	const isSelected = !isDirectory && node.path === selectedPath;
 	const isCollapsed = collapsedPaths[node.path] ?? false;
 	const fileStats = !isDirectory ? diffStatsByPath[node.path] : undefined;
-	const fileCount = isDirectory ? fileCountByPath[node.path] ?? 0 : 0;
+	const fileCount = isDirectory ? (fileCountByPath[node.path] ?? 0) : 0;
 	const rowClassName = `kb-file-tree-row${isDirectory ? " kb-file-tree-row-directory" : ""}${isSelected ? " kb-file-tree-row-selected" : ""}`;
 	const addedStatClassName = isSelected ? "text-accent-fg" : "text-status-green";
 	const removedStatClassName = isSelected ? "text-accent-fg" : "text-status-red";
@@ -42,11 +42,7 @@ function FileTreeRow({
 		return (
 			<Collapsible.Root open={!isCollapsed} onOpenChange={() => onToggleCollapse(node.path)}>
 				<Collapsible.Trigger asChild>
-					<button
-						type="button"
-						className={rowClassName}
-						style={{ paddingLeft: depth * 12 + 8 }}
-					>
+					<button type="button" className={rowClassName} style={{ paddingLeft: depth * 12 + 8 }}>
 						<ChevronDown
 							size={12}
 							className="kb-file-tree-collapse-icon"
@@ -122,11 +118,11 @@ export function FileTreePanel({
 	const fileCountByPath = useMemo(() => {
 		const counts: Record<string, number> = {};
 		for (const path of referencedPaths) {
-			const parts = path.split("/");
+			const parts = path.split("/").filter(Boolean);
 			let currentPath = "";
 			for (let i = 0; i < parts.length - 1; i++) {
-				currentPath = currentPath ? `${currentPath}/${parts[i]}` : parts[i];
-			 counts[currentPath] = (counts[currentPath] ?? 0) + 1;
+				currentPath = currentPath ? `${currentPath}/${parts[i]!}` : parts[i]!;
+				counts[currentPath] = (counts[currentPath] ?? 0) + 1;
 			}
 		}
 		return counts;
