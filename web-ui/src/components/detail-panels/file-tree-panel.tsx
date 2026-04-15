@@ -140,10 +140,19 @@ export function FileTreePanel({
 
 	const [collapsedPaths, setCollapsedPaths] = useState<Record<string, boolean>>({});
 
-	// Reset collapsed state when workspaceFiles changes (diff source switch)
+	// Reset collapsed state only when the actual set of file paths changes
+	// (e.g., diff mode switch or card change), not on every poll cycle.
+	const fileSetKey = useMemo(() => {
+		if (!workspaceFiles) return "";
+		return workspaceFiles
+			.map((f) => f.path)
+			.sort()
+			.join("|");
+	}, [workspaceFiles]);
+
 	useEffect(() => {
 		setCollapsedPaths({});
-	}, [workspaceFiles]);
+	}, [fileSetKey]);
 
 	const handleToggleCollapse = useCallback((path: string) => {
 		setCollapsedPaths((prev) => ({
