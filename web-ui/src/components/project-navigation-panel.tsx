@@ -724,14 +724,14 @@ function ProjectRow({
 			id: "review",
 			title: "Review",
 			shortLabel: "R",
-			toneClassName: "bg-accent-2/20 text-accent-2",
+			toneClassName: "bg-accent-2/30 text-accent-2",
 			count: project.taskCounts.review,
 		},
 		{
 			id: "trash",
 			title: "Trash",
 			shortLabel: "T",
-			toneClassName: "bg-status-red/20 text-status-red",
+			toneClassName: "bg-text-tertiary/10 text-text-tertiary",
 			count: project.taskCounts.trash,
 		},
 	].filter((item) => item.count > 0);
