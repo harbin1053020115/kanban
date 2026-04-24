@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const prepareAgentLaunchMock = vi.hoisted(() => vi.fn());
 const ptySessionSpawnMock = vi.hoisted(() => vi.fn());
@@ -42,11 +42,16 @@ describe("TerminalSessionManager auto-restart", () => {
 	beforeEach(() => {
 		prepareAgentLaunchMock.mockReset();
 		ptySessionSpawnMock.mockReset();
+		vi.useRealTimers();
 		prepareAgentLaunchMock.mockImplementation(async (input: { args: string[]; binary?: string }) => ({
 			binary: input.binary,
 			args: [...input.args],
 			env: {},
 		}));
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
 	});
 
 	it("restarts an attached agent session after it exits", async () => {
@@ -158,7 +163,7 @@ describe("TerminalSessionManager auto-restart", () => {
 		expect(session.write).toHaveBeenCalledTimes(1);
 	});
 
-	it("sends deferred Codex startup input when the startup UI header appears", async () => {
+	it("waits for the prompt marker instead of sending when the startup UI header appears", async () => {
 		const deferredStartupInput = "\u001b[200~/plan Validate startup UI detect\u001b[201~\r";
 		prepareAgentLaunchMock.mockResolvedValue({
 			binary: "codex",
@@ -192,6 +197,138 @@ describe("TerminalSessionManager auto-restart", () => {
 		}
 
 		session.triggerData(">_ OpenAI Codex (v0.117.0)\n");
+		expect(session.write).not.toHaveBeenCalledWith(deferredStartupInput);
+
+		session.triggerData("› ");
+		expect(session.write).toHaveBeenCalledWith(deferredStartupInput);
+		expect(session.write).toHaveBeenCalledTimes(1);
+	});
+
+	it("waits for Codex MCP startup work to finish before sending deferred startup input", async () => {
+		const deferredStartupInput = "\u001b[200~/plan Validate MCP startup\u001b[201~\r";
+		prepareAgentLaunchMock.mockResolvedValue({
+			binary: "codex",
+			args: [],
+			env: {},
+			deferredStartupInput,
+		});
+
+		const spawnedSessions: Array<ReturnType<typeof createMockPtySession>> = [];
+		ptySessionSpawnMock.mockImplementation((request: MockSpawnRequest) => {
+			const session = createMockPtySession(111, request);
+			spawnedSessions.push(session);
+			return session;
+		});
+
+		const manager = new TerminalSessionManager();
+		await manager.startTaskSession({
+			taskId: "task-1",
+			agentId: "codex",
+			binary: "codex",
+			args: [],
+			cwd: "/tmp/task-1",
+			prompt: "Fix the bug",
+			startInPlanMode: true,
+		});
+
+		const session = spawnedSessions[0];
+		expect(session).toBeDefined();
+		if (!session) {
+			return;
+		}
+
+		session.triggerData(">_ OpenAI Codex (v0.124.0)\n");
+		session.triggerData("Starting MCP servers (1/2)\n");
+		expect(session.write).not.toHaveBeenCalledWith(deferredStartupInput);
+
+		session.triggerData("Booting MCP server: linear\n");
+		expect(session.write).not.toHaveBeenCalledWith(deferredStartupInput);
+
+		session.triggerData("› ");
+		expect(session.write).toHaveBeenCalledWith(deferredStartupInput);
+		expect(session.write).toHaveBeenCalledTimes(1);
+	});
+
+	it("treats the misspelled Codex MCP startup text as busy", async () => {
+		const deferredStartupInput = "\u001b[200~/plan Validate misspelled MCP startup\u001b[201~\r";
+		prepareAgentLaunchMock.mockResolvedValue({
+			binary: "codex",
+			args: [],
+			env: {},
+			deferredStartupInput,
+		});
+
+		const spawnedSessions: Array<ReturnType<typeof createMockPtySession>> = [];
+		ptySessionSpawnMock.mockImplementation((request: MockSpawnRequest) => {
+			const session = createMockPtySession(111, request);
+			spawnedSessions.push(session);
+			return session;
+		});
+
+		const manager = new TerminalSessionManager();
+		await manager.startTaskSession({
+			taskId: "task-1",
+			agentId: "codex",
+			binary: "codex",
+			args: [],
+			cwd: "/tmp/task-1",
+			prompt: "Fix the bug",
+			startInPlanMode: true,
+		});
+
+		const session = spawnedSessions[0];
+		expect(session).toBeDefined();
+		if (!session) {
+			return;
+		}
+
+		session.triggerData("Staring MCP servers (1/1)\n› ");
+		expect(session.write).not.toHaveBeenCalledWith(deferredStartupInput);
+
+		session.triggerData("› ");
+		expect(session.write).toHaveBeenCalledWith(deferredStartupInput);
+		expect(session.write).toHaveBeenCalledTimes(1);
+	});
+
+	it("allows deferred Codex startup input after MCP busy timeout when a prompt is visible", async () => {
+		vi.useFakeTimers();
+		const deferredStartupInput = "\u001b[200~/plan Validate MCP timeout\u001b[201~\r";
+		prepareAgentLaunchMock.mockResolvedValue({
+			binary: "codex",
+			args: [],
+			env: {},
+			deferredStartupInput,
+		});
+
+		const spawnedSessions: Array<ReturnType<typeof createMockPtySession>> = [];
+		ptySessionSpawnMock.mockImplementation((request: MockSpawnRequest) => {
+			const session = createMockPtySession(111, request);
+			spawnedSessions.push(session);
+			return session;
+		});
+
+		const manager = new TerminalSessionManager();
+		await manager.startTaskSession({
+			taskId: "task-1",
+			agentId: "codex",
+			binary: "codex",
+			args: [],
+			cwd: "/tmp/task-1",
+			prompt: "Fix the bug",
+			startInPlanMode: true,
+		});
+
+		const session = spawnedSessions[0];
+		expect(session).toBeDefined();
+		if (!session) {
+			return;
+		}
+
+		session.triggerData("Starting MCP servers (1/1)\n› ");
+		expect(session.write).not.toHaveBeenCalledWith(deferredStartupInput);
+
+		vi.advanceTimersByTime(30_000);
+		session.triggerData("Starting MCP servers (1/1)\n› ");
 		expect(session.write).toHaveBeenCalledWith(deferredStartupInput);
 		expect(session.write).toHaveBeenCalledTimes(1);
 	});

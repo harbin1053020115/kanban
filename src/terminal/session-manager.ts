@@ -35,6 +35,7 @@ import type { TerminalSessionListener, TerminalSessionService } from "./terminal
 import { TerminalStateMirror } from "./terminal-state-mirror";
 
 const MAX_WORKSPACE_TRUST_BUFFER_CHARS = 16_384;
+const CODEX_MCP_STARTUP_BUSY_TIMEOUT_MS = 30_000;
 const AUTO_RESTART_WINDOW_MS = 5_000;
 const MAX_AUTO_RESTARTS_PER_WINDOW = 3;
 // TUI apps (Codex, OpenCode) can query OSC 10/11 before the browser terminal is attached
@@ -59,6 +60,10 @@ interface ActiveProcessState {
 	detectOutputTransition: AgentOutputTransitionDetector | null;
 	shouldInspectOutputForTransition: AgentOutputTransitionInspectionPredicate | null;
 	awaitingCodexPromptAfterEnter: boolean;
+	codexStartupOutputVersion: number;
+	codexMcpStartupBusyOutputVersion: number | null;
+	codexPromptOutputVersion: number | null;
+	codexMcpStartupBusySince: number | null;
 	autoConfirmedWorkspaceTrust: boolean;
 	workspaceTrustConfirmTimer: NodeJS.Timeout | null;
 }
@@ -197,9 +202,13 @@ function hasCodexInteractivePrompt(text: string): boolean {
 	return /(?:^|[\n\r])\s*›\s*/u.test(stripped);
 }
 
-function hasCodexStartupUiRendered(text: string): boolean {
+function hasCodexMcpStartupBusyText(text: string): boolean {
 	const stripped = stripAnsi(text).toLowerCase();
-	return stripped.includes("openai codex (v");
+	return (
+		stripped.includes("booting mcp server") ||
+		stripped.includes("starting mcp servers") ||
+		stripped.includes("staring mcp servers")
+	);
 }
 
 export class TerminalSessionManager implements TerminalSessionService {
@@ -220,10 +229,41 @@ export class TerminalSessionManager implements TerminalSessionService {
 		if (trustPromptVisible) {
 			return false;
 		}
+		const mcpStartupBusy =
+			active.codexMcpStartupBusyOutputVersion !== null &&
+			(active.codexPromptOutputVersion === null ||
+				active.codexPromptOutputVersion <= active.codexMcpStartupBusyOutputVersion);
+		const mcpBusyTimedOut =
+			active.codexMcpStartupBusySince !== null &&
+			now() - active.codexMcpStartupBusySince >= CODEX_MCP_STARTUP_BUSY_TIMEOUT_MS;
+		if (mcpStartupBusy && !mcpBusyTimedOut) {
+			return false;
+		}
 		const deferredInput = active.deferredStartupInput;
 		active.deferredStartupInput = null;
 		active.session.write(deferredInput);
 		return true;
+	}
+
+	private updateCodexStartupInputReadiness(active: ActiveProcessState, data: string): boolean {
+		if (data.length === 0) {
+			return false;
+		}
+		active.codexStartupOutputVersion += 1;
+		const outputVersion = active.codexStartupOutputVersion;
+		const mcpBusyInOutput = hasCodexMcpStartupBusyText(data);
+		const promptInOutput = hasCodexInteractivePrompt(data);
+		if (mcpBusyInOutput) {
+			active.codexMcpStartupBusyOutputVersion = outputVersion;
+			active.codexMcpStartupBusySince ??= now();
+		}
+		if (promptInOutput) {
+			active.codexPromptOutputVersion = outputVersion;
+		}
+		const mcpBusyTimedOut =
+			active.codexMcpStartupBusySince !== null &&
+			now() - active.codexMcpStartupBusySince >= CODEX_MCP_STARTUP_BUSY_TIMEOUT_MS;
+		return promptInOutput && (!mcpBusyInOutput || mcpBusyTimedOut);
 	}
 
 	private hasLiveOutputListener(entry: SessionEntry): boolean {
@@ -405,17 +445,13 @@ export class TerminalSessionManager implements TerminalSessionService {
 					}
 					updateSummary(entry, { lastOutputAt: now() });
 
-					// Codex plan-mode startup input is deferred until we know the TUI rendered.
-					// Trigger on either the interactive prompt marker or the startup header text.
+					// Codex plan-mode startup input is deferred until the prompt is usable.
+					// The startup header can render while MCP servers are still booting.
 					if (
 						entry.summary.agentId === "codex" &&
 						entry.active.deferredStartupInput !== null &&
 						data.length > 0 &&
-						(hasCodexInteractivePrompt(data) ||
-							hasCodexStartupUiRendered(data) ||
-							(entry.active.workspaceTrustBuffer !== null &&
-								(hasCodexInteractivePrompt(entry.active.workspaceTrustBuffer) ||
-									hasCodexStartupUiRendered(entry.active.workspaceTrustBuffer))))
+						this.updateCodexStartupInputReadiness(entry.active, data)
 					) {
 						this.trySendDeferredCodexStartupInput(request.taskId);
 					}
@@ -523,6 +559,10 @@ export class TerminalSessionManager implements TerminalSessionService {
 			detectOutputTransition: launch.detectOutputTransition ?? null,
 			shouldInspectOutputForTransition: launch.shouldInspectOutputForTransition ?? null,
 			awaitingCodexPromptAfterEnter: false,
+			codexStartupOutputVersion: 0,
+			codexMcpStartupBusyOutputVersion: null,
+			codexPromptOutputVersion: null,
+			codexMcpStartupBusySince: null,
 			autoConfirmedWorkspaceTrust: false,
 			workspaceTrustConfirmTimer: null,
 		};
@@ -676,6 +716,10 @@ export class TerminalSessionManager implements TerminalSessionService {
 			detectOutputTransition: null,
 			shouldInspectOutputForTransition: null,
 			awaitingCodexPromptAfterEnter: false,
+			codexStartupOutputVersion: 0,
+			codexMcpStartupBusyOutputVersion: null,
+			codexPromptOutputVersion: null,
+			codexMcpStartupBusySince: null,
 			autoConfirmedWorkspaceTrust: false,
 			workspaceTrustConfirmTimer: null,
 		};
