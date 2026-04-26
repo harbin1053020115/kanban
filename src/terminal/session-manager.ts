@@ -35,7 +35,7 @@ import type { TerminalSessionListener, TerminalSessionService } from "./terminal
 import { TerminalStateMirror } from "./terminal-state-mirror";
 
 const MAX_WORKSPACE_TRUST_BUFFER_CHARS = 16_384;
-const CODEX_MCP_STARTUP_BUSY_TIMEOUT_MS = 30_000;
+const CODEX_DEFERRED_STARTUP_INPUT_STABLE_MS = 1_000;
 const AUTO_RESTART_WINDOW_MS = 5_000;
 const MAX_AUTO_RESTARTS_PER_WINDOW = 3;
 // TUI apps (Codex, OpenCode) can query OSC 10/11 before the browser terminal is attached
@@ -60,10 +60,7 @@ interface ActiveProcessState {
 	detectOutputTransition: AgentOutputTransitionDetector | null;
 	shouldInspectOutputForTransition: AgentOutputTransitionInspectionPredicate | null;
 	awaitingCodexPromptAfterEnter: boolean;
-	codexStartupOutputVersion: number;
-	codexMcpStartupBusyOutputVersion: number | null;
-	codexPromptOutputVersion: number | null;
-	codexMcpStartupBusySince: number | null;
+	deferredStartupInputCheckTimer: NodeJS.Timeout | null;
 	autoConfirmedWorkspaceTrust: boolean;
 	workspaceTrustConfirmTimer: NodeJS.Timeout | null;
 }
@@ -204,18 +201,25 @@ function hasCodexInteractivePrompt(text: string): boolean {
 
 function hasCodexMcpStartupBusyText(text: string): boolean {
 	const stripped = stripAnsi(text).toLowerCase();
+	const compact = stripped.replace(/[^a-z0-9]+/gu, "");
 	return (
-		stripped.includes("booting mcp server") ||
-		stripped.includes("starting mcp servers") ||
-		stripped.includes("staring mcp servers")
+		compact.includes("bootingmcpserv") || compact.includes("startingmcpserv") || compact.includes("staringmcpserv")
 	);
+}
+
+function stopActiveProcessTimers(state: ActiveProcessState): void {
+	stopWorkspaceTrustTimers(state);
+	if (state.deferredStartupInputCheckTimer) {
+		clearTimeout(state.deferredStartupInputCheckTimer);
+		state.deferredStartupInputCheckTimer = null;
+	}
 }
 
 export class TerminalSessionManager implements TerminalSessionService {
 	private readonly entries = new Map<string, SessionEntry>();
 	private readonly summaryListeners = new Set<(summary: RuntimeTaskSessionSummary) => void>();
 
-	private trySendDeferredCodexStartupInput(taskId: string): boolean {
+	private isDeferredCodexStartupInputReady(taskId: string, visibleText: string): boolean {
 		const entry = this.entries.get(taskId);
 		const active = entry?.active;
 		if (!entry || !active || entry.summary.agentId !== "codex") {
@@ -229,15 +233,18 @@ export class TerminalSessionManager implements TerminalSessionService {
 		if (trustPromptVisible) {
 			return false;
 		}
-		const mcpStartupBusy =
-			active.codexMcpStartupBusyOutputVersion !== null &&
-			(active.codexPromptOutputVersion === null ||
-				active.codexPromptOutputVersion <= active.codexMcpStartupBusyOutputVersion);
-		const mcpBusyTimedOut =
-			active.codexMcpStartupBusySince !== null &&
-			now() - active.codexMcpStartupBusySince >= CODEX_MCP_STARTUP_BUSY_TIMEOUT_MS;
-		if (mcpStartupBusy && !mcpBusyTimedOut) {
+		return hasCodexInteractivePrompt(visibleText) && !hasCodexMcpStartupBusyText(visibleText);
+	}
+
+	private sendDeferredCodexStartupInput(taskId: string): boolean {
+		const entry = this.entries.get(taskId);
+		const active = entry?.active;
+		if (!entry || !active || entry.summary.agentId !== "codex" || active.deferredStartupInput === null) {
 			return false;
+		}
+		if (active.deferredStartupInputCheckTimer) {
+			clearTimeout(active.deferredStartupInputCheckTimer);
+			active.deferredStartupInputCheckTimer = null;
 		}
 		const deferredInput = active.deferredStartupInput;
 		active.deferredStartupInput = null;
@@ -245,25 +252,46 @@ export class TerminalSessionManager implements TerminalSessionService {
 		return true;
 	}
 
-	private updateCodexStartupInputReadiness(active: ActiveProcessState, data: string): boolean {
-		if (data.length === 0) {
-			return false;
+	private scheduleStableDeferredCodexStartupInputCheck(taskId: string): void {
+		const entry = this.entries.get(taskId);
+		const active = entry?.active;
+		if (!entry || !active || entry.summary.agentId !== "codex" || active.deferredStartupInput === null) {
+			return;
 		}
-		active.codexStartupOutputVersion += 1;
-		const outputVersion = active.codexStartupOutputVersion;
-		const mcpBusyInOutput = hasCodexMcpStartupBusyText(data);
-		const promptInOutput = hasCodexInteractivePrompt(data);
-		if (mcpBusyInOutput) {
-			active.codexMcpStartupBusyOutputVersion = outputVersion;
-			active.codexMcpStartupBusySince ??= now();
+		if (active.deferredStartupInputCheckTimer) {
+			return;
 		}
-		if (promptInOutput) {
-			active.codexPromptOutputVersion = outputVersion;
+		active.deferredStartupInputCheckTimer = setTimeout(() => {
+			const currentActive = this.entries.get(taskId)?.active;
+			if (currentActive) {
+				currentActive.deferredStartupInputCheckTimer = null;
+			}
+			this.queueDeferredCodexStartupInputCheck(taskId, { allowSend: true });
+		}, CODEX_DEFERRED_STARTUP_INPUT_STABLE_MS);
+	}
+
+	private queueDeferredCodexStartupInputCheck(taskId: string, options: { allowSend?: boolean } = {}): void {
+		const entry = this.entries.get(taskId);
+		const mirror = entry?.terminalStateMirror;
+		if (!entry?.active || entry.summary.agentId !== "codex" || entry.active.deferredStartupInput === null) {
+			return;
 		}
-		const mcpBusyTimedOut =
-			active.codexMcpStartupBusySince !== null &&
-			now() - active.codexMcpStartupBusySince >= CODEX_MCP_STARTUP_BUSY_TIMEOUT_MS;
-		return promptInOutput && (!mcpBusyInOutput || mcpBusyTimedOut);
+		if (!mirror) {
+			return;
+		}
+		void mirror
+			.getVisibleText()
+			.then((visibleText) => {
+				if (!this.isDeferredCodexStartupInputReady(taskId, visibleText)) {
+					return;
+				}
+				if (options.allowSend) {
+					this.sendDeferredCodexStartupInput(taskId);
+					return;
+				}
+				this.scheduleStableDeferredCodexStartupInputCheck(taskId);
+			})
+			.catch(() => undefined);
 	}
 
 	private hasLiveOutputListener(entry: SessionEntry): boolean {
@@ -343,7 +371,7 @@ export class TerminalSessionManager implements TerminalSessionService {
 		}
 
 		if (entry.active) {
-			stopWorkspaceTrustTimers(entry.active);
+			stopActiveProcessTimers(entry.active);
 			entry.active.session.stop();
 			entry.active = null;
 		}
@@ -406,7 +434,7 @@ export class TerminalSessionManager implements TerminalSessionService {
 					if (filteredChunk.byteLength === 0) {
 						return;
 					}
-					entry.terminalStateMirror?.applyOutput(filteredChunk);
+					void entry.terminalStateMirror?.applyOutput(filteredChunk);
 
 					const needsDecodedOutput =
 						entry.active.workspaceTrustBuffer !== null ||
@@ -447,13 +475,8 @@ export class TerminalSessionManager implements TerminalSessionService {
 
 					// Codex plan-mode startup input is deferred until the prompt is usable.
 					// The startup header can render while MCP servers are still booting.
-					if (
-						entry.summary.agentId === "codex" &&
-						entry.active.deferredStartupInput !== null &&
-						data.length > 0 &&
-						this.updateCodexStartupInputReadiness(entry.active, data)
-					) {
-						this.trySendDeferredCodexStartupInput(request.taskId);
+					if (entry.summary.agentId === "codex" && entry.active.deferredStartupInput !== null && data.length > 0) {
+						this.queueDeferredCodexStartupInputCheck(request.taskId);
 					}
 
 					const adapterEvent = entry.active.detectOutputTransition?.(data, entry.summary) ?? null;
@@ -487,7 +510,7 @@ export class TerminalSessionManager implements TerminalSessionService {
 					if (!currentActive) {
 						return;
 					}
-					stopWorkspaceTrustTimers(currentActive);
+					stopActiveProcessTimers(currentActive);
 
 					const summary = this.applySessionEvent(currentEntry, {
 						type: "process.exit",
@@ -559,10 +582,7 @@ export class TerminalSessionManager implements TerminalSessionService {
 			detectOutputTransition: launch.detectOutputTransition ?? null,
 			shouldInspectOutputForTransition: launch.shouldInspectOutputForTransition ?? null,
 			awaitingCodexPromptAfterEnter: false,
-			codexStartupOutputVersion: 0,
-			codexMcpStartupBusyOutputVersion: null,
-			codexPromptOutputVersion: null,
-			codexMcpStartupBusySince: null,
+			deferredStartupInputCheckTimer: null,
 			autoConfirmedWorkspaceTrust: false,
 			workspaceTrustConfirmTimer: null,
 		};
@@ -601,7 +621,7 @@ export class TerminalSessionManager implements TerminalSessionService {
 		}
 
 		if (entry.active) {
-			stopWorkspaceTrustTimers(entry.active);
+			stopActiveProcessTimers(entry.active);
 			entry.active.session.stop();
 			entry.active = null;
 		}
@@ -641,7 +661,7 @@ export class TerminalSessionManager implements TerminalSessionService {
 					if (filteredChunk.byteLength === 0) {
 						return;
 					}
-					entry.terminalStateMirror?.applyOutput(filteredChunk);
+					void entry.terminalStateMirror?.applyOutput(filteredChunk);
 
 					if (entry.active.workspaceTrustBuffer !== null) {
 						entry.active.workspaceTrustBuffer += filteredChunk.toString("utf8");
@@ -666,7 +686,7 @@ export class TerminalSessionManager implements TerminalSessionService {
 					if (!currentActive) {
 						return;
 					}
-					stopWorkspaceTrustTimers(currentActive);
+					stopActiveProcessTimers(currentActive);
 
 					const summary = updateSummary(currentEntry, {
 						state: currentActive.session.wasInterrupted() ? "interrupted" : "idle",
@@ -716,10 +736,7 @@ export class TerminalSessionManager implements TerminalSessionService {
 			detectOutputTransition: null,
 			shouldInspectOutputForTransition: null,
 			awaitingCodexPromptAfterEnter: false,
-			codexStartupOutputVersion: 0,
-			codexMcpStartupBusyOutputVersion: null,
-			codexPromptOutputVersion: null,
-			codexMcpStartupBusySince: null,
+			deferredStartupInputCheckTimer: null,
 			autoConfirmedWorkspaceTrust: false,
 			workspaceTrustConfirmTimer: null,
 		};
@@ -965,7 +982,7 @@ export class TerminalSessionManager implements TerminalSessionService {
 		entry.suppressAutoRestartOnExit = true;
 		const cleanupFn = entry.active.onSessionCleanup;
 		entry.active.onSessionCleanup = null;
-		stopWorkspaceTrustTimers(entry.active);
+		stopActiveProcessTimers(entry.active);
 		entry.active.session.stop();
 		if (cleanupFn) {
 			cleanupFn().catch(() => {
@@ -981,7 +998,7 @@ export class TerminalSessionManager implements TerminalSessionService {
 			if (!entry.active) {
 				continue;
 			}
-			stopWorkspaceTrustTimers(entry.active);
+			stopActiveProcessTimers(entry.active);
 			entry.active.session.stop({ interrupted: true });
 		}
 		return activeEntries.map((entry) => cloneSummary(entry.summary));
